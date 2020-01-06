@@ -28,7 +28,7 @@
                     <form class="form-elments1" action="{{ url('epg/build') }}" method="get">
                     <div class="card user-card2">
                         <div class="card-body text-center">
-                            <h3 class="m-b-15">Total number of channels</h3>
+                            <h3 class="m-b-15">Total number of active channels</h3>
                             <div class="risk-rate">
                                 <span><b>5</b></span>
                             </div>
