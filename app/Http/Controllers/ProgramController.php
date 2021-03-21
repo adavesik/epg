@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Channel;
 use App\Programs;
 use Illuminate\Http\Request;
 
@@ -35,17 +36,17 @@ class ProgramController extends Controller
      */
     public function store(Request $request)
     {
-        //dd($request);
 
         $prog = new Programs();
 
         //regex for matching time and program name, eg. 12:01 klklkl
         $regex = '/([0-9:]{5} )(.*)/';
-
         if($request->has('list', 'channel_id', 'prog_date'))
         {
             $str = $request->input('list');
             $channel_id = $request->input('channel_id');
+            $channel = Channel::where('channel_id',$channel_id)->get()[0];
+            $channel_id = $channel->id;
             $prog_date = $request->input('prog_date');
         }
 
@@ -56,7 +57,6 @@ class ProgramController extends Controller
 
         //match all programs with their time
         preg_match_all($regex, $str, $matches, PREG_SET_ORDER, 0);
-
         if($prog->checkProgramMaxDate($channel_id, $prevProgDate)){
             $end_time = $prog_date.' '.implode(':', explode('.', trim($matches[0][1]))).':00';
             //update record and set last programme end time

@@ -22,7 +22,7 @@ class CreateChannelsTable extends Migration
             $table->text('channel_logo')->nullable()->default(NULL);
             $table->string('channel_logo_type')->nullable()->default(NULL);
             $table->string('utc_offset')->default("+0400");
-            $table->integer('archived');
+            $table->integer('archived')->default(0);
             $table->string('epg_url');
             $table->timestamps();
         });

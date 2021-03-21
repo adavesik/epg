@@ -9,13 +9,9 @@
                     <div class="row align-items-center">
                         <div class="col-md-12">
                             <div class="page-header-title">
-                                <h5 class="m-b-10">Dashboard</h5>
+                                <h5 class="m-b-10">Generate Full EPG</h5>
                             </div>
-                            <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="index.html"><i class="feather icon-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="#!">Membership</a></li>
-                                <li class="breadcrumb-item"><a href="#!">Coupons</a></li>
-                            </ul>
+
                         </div>
                     </div>
                 </div>
@@ -30,7 +26,7 @@
                         <div class="card-body text-center">
                             <h3 class="m-b-15">Total number of active channels</h3>
                             <div class="risk-rate">
-                                <span><b>5</b></span>
+                                <span><b>{{$activeChannels}}</b></span>
                             </div>
                             <h6 class="m-b-15">&nbsp;</h6>
                             <a href="{{ route('channels') }}" class="text-c-green b-b-success">View Channels</a>

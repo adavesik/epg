@@ -21,8 +21,9 @@ class EpgController extends Controller
      */
     public function index()
     {
-        return view("pages.epg.generate");
-        //dd($result);
+        $activeChannels = Channel::where(['archived'=>0])->count();
+
+        return view("pages.epg.generate",compact('activeChannels'));
     }
 
     public function buildFullEPG(Request $request){
@@ -68,11 +69,11 @@ class EpgController extends Controller
 
         foreach ($channelList as $channel){
 
-            $programsList = $objProgram->getSpecificDateProgramsList($channel->channel_id, $startDate, $endDate);
+            $programsList = $objProgram->getSpecificDateProgramsList($channel->id, $startDate, $endDate);
 
             foreach ($programsList as $program){
                 $programme = $xml->addChild('programme');
-                $programme->addAttribute('channel', $program->channel_id);
+                $programme->addAttribute('channel', $channel->channel_id);
                 $programme->addAttribute('stop', str_replace(' ','', str_replace('-','',str_replace(':','',$program->program_end))). ' '.$channel->utc_offset);
                 $programme->addAttribute('start',str_replace(' ','', str_replace('-','',str_replace(':','',$program->program_start))). ' '.$channel->utc_offset);
 
@@ -165,6 +166,12 @@ class EpgController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function downloadByUrl ($channelId)
+    {
+
+
     }
 
 }

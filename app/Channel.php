@@ -43,4 +43,9 @@ class Channel extends Model
             ->get();
     }
 
+    public function programs()
+    {
+        return $this->hasMany(Programs::class,'channel_id','id');
+    }
+
 }

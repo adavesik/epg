@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class Programs extends Model
 {
-    //protected $fillable = ['channel_id', 'progr', 'display_name_ru', 'channel_logo', 'channel_logo_type'];
+    protected $fillable = ['channel_id', 'program_start', 'title','category_id'];
 
     public function getDailyProgramList($channel, $day){
         $programs = DB::table('programs')
@@ -23,6 +23,8 @@ class Programs extends Model
 
 
     public function getLastProgramDate($channel){
+//        dd($channel);
+
         $lastDate = DB::table('programs')
             ->selectRaw('SUBSTRING(MAX(program_start), 1, 10) as ps')
             ->where('channel_id', '=', $channel)

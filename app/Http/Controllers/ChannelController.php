@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Channel;
 use App\Programs;
+use Carbon\Carbon;
 use DateTime;
 use Intervention\Image\Facades\Image;
 use Intervention\Image\ImageServiceProvider;
@@ -14,8 +15,11 @@ class ChannelController extends Controller
 {
     protected $channel;
 
-    public function __construct(Channel $channel){
+    protected $programs;
+
+    public function __construct(Channel $channel,Programs $programs){
         $this->channel = $channel;
+        $this->programs = $programs;
     }
 
     /**
@@ -74,10 +78,9 @@ class ChannelController extends Controller
             resize( 300, null, function ( $constraint ) {
                 $constraint->aspectRatio();
             })->encode( $imageType );
-
             $this->channel->channel_logo = base64_encode( $imageStr );
             $this->channel->channel_logo_type = $imageType;
-            $this->channel->save();
+//            $this->channel->save();
         }
 
         if ($validator->fails()) {
@@ -86,12 +89,23 @@ class ChannelController extends Controller
                 'messages' => $validator->errors(),
             ], 422);
         }
+        $date = Carbon::yesterday()->hour(23)->toDateTime();
+        if ($this->channel->save()){
+            $channel_id = $this->channel->id;
+            $this->programs->fill([
+                'channel_id'  => $channel_id,
+                'program_start' => $date,
+                'title' => 'start',
+                'category_id'   => '1'
+            ]);
 
-        $channel = $this->channel->save();
+            $this->programs->save();
+
+        }
 
         return response()->json([
             'error' => false,
-            'channel'  => $channel,
+            'channel'  => $this->channel,
         ], 200);
     }
 
@@ -209,11 +223,10 @@ class ChannelController extends Controller
         $objChannel = new Channel();
         $program = new Programs();
         //dd($objChannel->getDailyProgramList('24', '2019-11-04'));
-
         $channel        = $objChannel->getChannelByID($id);
-        $lastFilledDate = $program->getLastProgramDate($id);
+        $channelID = $channel[0]->id;
+        $lastFilledDate = $program->getLastProgramDate($channelID);
         $nextFillabelDate = $this->setNextDateToBeFilled($lastFilledDate->ps);
-        //dd($nextFillabelDate);
         $prev7Days      = $this->getLastNDays(7,'Y-m-d');
 
         return view('pages.channels.epg', compact('channel', 'id', 'prev7Days', 'lastFilledDate', 'nextFillabelDate'));
@@ -389,7 +402,13 @@ class ChannelController extends Controller
         $y = date("Y");
         $dateArray = array();
         for ($i = 0; $i <= $days - 1; $i++) {
-            $dateArray[] = date($format, mktime(0, 0, 0, $m, ($de - $i), $y));
+            $date = date($format, mktime(0, 0, 0, $m, ($de - $i), $y));
+            $day = date('l', strtotime($date));
+
+            $dateArray[] = [
+                'date'=>date($format, mktime(0, 0, 0, $m, ($de - $i), $y)),
+                'day' => $day
+            ];
         }
         return array_reverse($dateArray);
     }
@@ -404,5 +423,92 @@ class ChannelController extends Controller
     {
         $channels = Channel::where('archived', 1)->orderBy('id', 'desc')->paginate(5);
         return view('pages.channels.disabled')->with('channels',$channels);
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function reset(Request $request)
+    {
+        $request->validate([
+            'id'=> 'required|integer|exists:channels,id'
+        ]);
+
+        $date = Carbon::yesterday()->hour(23)->toDateTime();
+
+        //delete channel programs
+        Programs::where(['channel_id'=>$request->id])->delete();
+
+        //Ad default record
+        Programs::create([
+            'channel_id' => $request->id,
+            'program_start' =>$date,
+            'title'         => 'start',
+            'category_id'   => '1'
+        ]);
+
+        return redirect()->back()->with('success','The channel has been reset successfully.');
+    }
+
+    public function getPrograms(Request $request)
+    {
+        $request->validate([
+            'channelId'=> 'required|integer|exists:channels,channel_id'
+        ]);
+
+        $channel = Channel::where(['channel_id'=>$request->channelId])->first();
+
+        $programs = Programs::where(['channel_id'=> $channel->id])
+            ->whereDate('program_start','=',$request->date)
+            ->get()->toArray();
+
+        if (!empty($programs)){
+            foreach ($programs as &$program){
+                $start =  Carbon::createFromFormat('Y-m-d H:i:s',$program['program_start']);
+                $program['hi'] = $start->format('H:i');
+            }
+            $programs = array_chunk($programs, ceil(count($programs) / 2));
+        }
+
+        return response()->json($programs);
+    }
+
+    function deleteFromDate(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'channel_id' => 'required|integer|exists:channels,id'
+        ]);
+        $startDate = $request->get('start_date');
+
+        $startDate = Carbon::createFromFormat('Y-m-d',$startDate)->startOfDay();
+        $channelId = $request->get('channel_id');
+        $data = Programs::whereDate('program_start','>=',$startDate)
+            ->where(['channel_id'=>$channelId])
+            ->delete();
+
+        $lastDate = $startDate->addDays(-1)->startOfDay();
+
+        $lastProgram = Programs::whereDate('program_start','>=',$lastDate)
+            ->where(['channel_id'=>$channelId])
+            ->orderBy('program_start','DESC')
+            ->limit(1)
+            ->get();
+        if (!$lastProgram->isEmpty()){
+            $lastProgram = $lastProgram[0];
+            Programs::where(['id'=>$lastProgram->id])->update(['program_end'=>null]);
+        }else{
+
+            Programs::create([
+                'channel_id' => $channelId,
+                'program_start' =>$lastDate->hour(23),
+                'title'         => 'start',
+                'category_id'   => '1'
+            ]);
+        }
+
+        return redirect()->back()->with('success','Programs Deleted Successfully');
+
     }
 }
