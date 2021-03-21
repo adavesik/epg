@@ -170,7 +170,12 @@ class EpgController extends Controller
 
     public function downloadByUrl ($channelId)
     {
+        $channel = Channel::findOrFail($channelId);
+        $filename = "$channel->display_name_am.xml";
+        $tempFile = tempnam(sys_get_temp_dir(), $filename);
+        copy($channel->epg_url, $tempFile);
 
+        return response()->download($tempFile, $filename);
 
     }
 

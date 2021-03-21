@@ -9,13 +9,9 @@
                     <div class="row align-items-center">
                         <div class="col-md-12">
                             <div class="page-header-title">
-                                <h5 class="m-b-10">Dashboard</h5>
+                                <h5 class="m-b-10">EPG FROM URL</h5>
                             </div>
-                            <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="index.html"><i class="feather icon-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="#!">Membership</a></li>
-                                <li class="breadcrumb-item"><a href="#!">Coupons</a></li>
-                            </ul>
+
                         </div>
                     </div>
                 </div>
@@ -59,7 +55,8 @@
                                                     <td>{{ $channel->channel_orig_id }}</td>
                                                     <td><a href="{{ $channel->epg_url }}">{{ $channel->epg_url }}</a></td>
                                                     <td>
-                                                        <button onclick="event.preventDefault();fetchEpgByUrl({{$channel->id}});" type="button" class="btn btn-primary btn-sm" name="btn_fetchUrl" id="btn-fetchUrl" data-url="{{ $channel->epg_url }}"><i class="feather icon-plus"></i>Get EPG XML file</button>
+                                                        <button onclick="$('#epg_form_{{$channel->id}}').submit()" {{--onclick="event.preventDefault();fetchEpgByUrl({{$channel->id}});"--}} type="button" class="btn btn-primary btn-sm" name="btn_fetchUrl" id="btn-fetchUrl" data-url="{{ $channel->epg_url }}"><i class="feather icon-plus"></i>Get EPG XML file</button>
+                                                        <form class="d-none" id="epg_form_{{$channel->id}}" action="{{route('epg.download',$channel->id)}}"></form>
                                                         <button onclick="event.preventDefault();editEpgUrlForm({{$channel->id}});" type="button" class="btn btn-info btn-sm" value=""><i class="feather icon-edit"></i> Edit </button>
                                                         <button onclick="event.preventDefault();deleteEpgUrlForm({{$channel->id}});" type="button" class="btn btn-danger btn-sm" value=""><i class="feather icon-trash-2"></i> Delete</button>
                                                     </td>
